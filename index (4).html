@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AZ-900 Study Planner (Unofficial)</title>
+<style>
+  :root{--bg:#0f172a;--card:#1e293b;--muted:#94a3b8;--text:#f1f5f9;--accent:#38bdf8;--good:#4ade80;--warn:#fbbf24;--line:#334155}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+  .wrap{max-width:820px;margin:0 auto;padding:20px 16px 60px}
+  h1{font-size:1.6rem;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 20px;font-size:.95rem}
+  .badge{display:inline-block;background:#334155;color:var(--warn);font-size:.75rem;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:middle}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+  label{display:block;font-weight:600;margin:0 0 6px;font-size:.9rem}
+  input[type=date],input[type=number]{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:#0f172a;color:var(--text);font-size:1rem}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:520px){.row{grid-template-columns:1fr}}
+  .weak{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-top:6px}
+  @media(max-width:520px){.weak{grid-template-columns:1fr}}
+  .weak label{font-weight:400;display:flex;gap:8px;align-items:flex-start;margin:0;font-size:.88rem;cursor:pointer}
+  .dom{grid-column:1/-1;color:var(--accent);font-weight:700;font-size:.8rem;margin-top:8px;text-transform:uppercase;letter-spacing:.04em}
+  button{background:var(--accent);color:#04202e;border:0;border-radius:10px;padding:12px 18px;font-size:1rem;font-weight:700;cursor:pointer}
+  button.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center}
+  .stat b{display:block;font-size:1.6rem;color:var(--accent)}
+  .stat span{color:var(--muted);font-size:.8rem}
+  .bar{height:12px;background:#0f172a;border-radius:99px;overflow:hidden;margin-top:12px}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--good));transition:width .3s}
+  .day{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}
+  .day:last-child{border-bottom:0}
+  .day input{margin-top:5px;width:20px;height:20px;accent-color:var(--good);flex:none}
+  .day.done .body{opacity:.5;text-decoration:line-through}
+  .dt{font-weight:700}
+  .it{color:var(--muted);font-size:.9rem}
+  .it em{color:var(--warn);font-style:normal;font-size:.75rem;border:1px solid var(--warn);border-radius:99px;padding:0 6px;margin-left:4px}
+  .exam{color:var(--good);font-weight:700}
+  .err{color:#f87171;font-weight:600;margin-top:10px}
+  footer{color:var(--muted);font-size:.78rem;text-align:center;margin-top:24px}
+  @media print{body{background:#fff;color:#000}.card{border:1px solid #999;background:#fff}.no-print{display:none}.it,.sub{color:#333}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>AZ-900 Study Planner <span class="badge">Unofficial</span></h1>
+  <p class="sub">Tell me your exam date, daily study hours and weak areas. Get a day-by-day plan.</p>
+
+  <div class="card no-print">
+    <div class="row">
+      <div><label for="exam">Exam date</label><input type="date" id="exam"></div>
+      <div><label for="hpd">Study hours per day</label><input type="number" id="hpd" min="0.5" max="12" step="0.5" value="2"></div>
+    </div>
+    <label style="margin-top:14px">Weak areas (these get extra time)</label>
+    <div class="weak" id="weak"></div>
+    <div class="actions">
+      <button id="go">Build my plan</button>
+      <button class="ghost" id="reset">Reset progress</button>
+    </div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div id="out" style="display:none">
+    <div class="card">
+      <div class="stats">
+        <div class="stat"><b id="sDays">0</b><span>days until exam</span></div>
+        <div class="stat"><b id="sHours">0</b><span>total study hours</span></div>
+        <div class="stat"><b id="sPct">0%</b><span>plan completed</span></div>
+      </div>
+      <div class="bar"><i id="bar"></i></div>
+    </div>
+    <div class="card" id="plan"></div>
+    <div class="actions no-print"><button class="ghost" onclick="window.print()">Print / Save as PDF</button></div>
+  </div>
+
+  <footer>Unofficial study tool. Not affiliated with or endorsed by Microsoft. Topics follow the public AZ-900 skills outline; always check Microsoft Learn for the latest.</footer>
+</div>
+
+<script>
+const TOPICS=[
+ {d:"Cloud concepts",n:"Cloud computing and its benefits (scalability, elasticity, high availability)",w:9},
+ {d:"Cloud concepts",n:"Public, private and hybrid cloud + shared responsibility",w:9},
+ {d:"Cloud concepts",n:"Consumption pricing and IaaS / PaaS / SaaS",w:9},
+ {d:"Azure architecture and services",n:"Regions, availability zones and resource groups",w:7.5},
+ {d:"Azure architecture and services",n:"Compute: VMs, containers, App Service, Functions",w:7.5},
+ {d:"Azure architecture and services",n:"Networking: VNets, VPN Gateway, ExpressRoute, DNS",w:7.5},
+ {d:"Azure architecture and services",n:"Storage: blob, files, redundancy options",w:7.5},
+ {d:"Azure architecture and services",n:"Identity and security: Entra ID, MFA, Zero Trust, Defender",w:7.5},
+ {d:"Azure management and governance",n:"Cost management: pricing calculator, TCO, tags",w:8},
+ {d:"Azure management and governance",n:"Governance: Policy, resource locks, Purview",w:8},
+ {d:"Azure management and governance",n:"Managing resources: Portal, CLI, PowerShell, ARM, Arc",w:8},
+ {d:"Azure management and governance",n:"Monitoring: Advisor, Service Health, Azure Monitor",w:8}
+];
+const KEY="az900_planner_v1";
+const $=id=>document.getElementById(id);
+const store={
+  get(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return {}}},
+  set(o){try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
+};
+
+// build weak-area checkboxes
+(function(){
+  let html="",last="";
+  TOPICS.forEach((t,i)=>{
+    if(t.d!==last){html+=`<div class="dom">${t.d}</div>`;last=t.d}
+    html+=`<label><input type="checkbox" data-i="${i}"> ${t.n}</label>`;
+  });
+  $("weak").innerHTML=html;
+})();
+
+function iso(d){const m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return d.getFullYear()+"-"+m+"-"+day}
+function fmtDate(d){return d.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"})}
+function fmtMin(m){m=Math.round(m/5)*5;const h=Math.floor(m/60),r=m%60;return (h?h+"h ":"")+(r?r+"m":"")||"0m"}
+
+function build(){
+  $("err").textContent="";
+  const examVal=$("exam").value, hpd=parseFloat($("hpd").value);
+  if(!examVal){$("err").textContent="Please pick your exam date.";return}
+  if(!(hpd>0)){$("err").textContent="Enter how many hours you can study per day.";return}
+  const today=new Date();today.setHours(0,0,0,0);
+  const exam=new Date(examVal+"T00:00:00");
+  const days=Math.round((exam-today)/864e5);
+  if(days<1){$("err").textContent="Your exam date must be in the future.";return}
+  if(days>180){$("err").textContent="That is more than 180 days away. Pick a closer date for a useful plan.";return}
+
+  const weakSet=new Set([...document.querySelectorAll("#weak input:checked")].map(c=>+c.dataset.i));
+  const hasRevision=days>=3;
+  const studyDays=hasRevision?days-1:days;
+  const cap=hpd*60, total=studyDays*cap;
+
+  const ws=TOPICS.map((t,i)=>t.w*(weakSet.has(i)?1.6:1));
+  const sum=ws.reduce((a,b)=>a+b,0);
+
+  const plan=[];for(let i=0;i<studyDays;i++){const d=new Date(today);d.setDate(d.getDate()+i);plan.push({date:d,items:[],used:0})}
+  let di=0;
+  TOPICS.forEach((t,i)=>{
+    let rem=total*ws[i]/sum;
+    while(rem>0.5&&di<studyDays){
+      const space=cap-plan[di].used;
+      if(space<1){di++;continue}
+      const take=Math.min(space,rem);
+      plan[di].items.push({n:t.n,m:take,weak:weakSet.has(i)});
+      plan[di].used+=take;rem-=take;
+    }
+  });
+
+  const rows=plan.map(p=>({key:iso(p.date),date:p.date,items:p.items}));
+  if(hasRevision){
+    const d=new Date(today);d.setDate(d.getDate()+days-1);
+    const w=[...weakSet].map(i=>({n:"Quick recap: "+TOPICS[i].n,m:0,weak:true}));
+    rows.push({key:iso(d),date:d,items:w.length?w:[{n:"Quick recap of all three domains + practice questions",m:0}],rev:true});
+  }
+  rows.push({key:iso(exam),date:exam,exam:true,items:[]});
+
+  store.set({exam:examVal,hpd,weak:[...weakSet],done:(store.get().exam===examVal?store.get().done:{})||{}});
+  render(rows,days,studyDays*hpd);
+}
+
+function render(rows,days,hours){
+  const st=store.get(),done=st.done||{};
+  $("sDays").textContent=days;
+  $("sHours").textContent=(Math.round(hours*10)/10);
+  $("plan").innerHTML=rows.map(r=>{
+    if(r.exam)return `<div class="day"><div class="body"><div class="dt exam">${fmtDate(r.date)}: EXAM DAY. You've got this! 🎉</div></div></div>`;
+    const items=r.items.map(it=>`<div class="it">• ${it.n}${it.m?` <b>(${fmtMin(it.m)})</b>`:""}${it.weak?"<em>weak area</em>":""}</div>`).join("");
+    const title=r.rev?"Revision day":"Study";
+    return `<div class="day ${done[r.key]?"done":""}" data-k="${r.key}"><input type="checkbox" ${done[r.key]?"checked":""}><div class="body"><div class="dt">${fmtDate(r.date)} · ${title}</div>${items}</div></div>`;
+  }).join("");
+  $("out").style.display="block";
+  document.querySelectorAll(".day input").forEach(cb=>cb.addEventListener("change",e=>{
+    const k=e.target.closest(".day").dataset.k,s=store.get();
+    s.done=s.done||{};if(e.target.checked)s.done[k]=1;else delete s.done[k];
+    store.set(s);e.target.closest(".day").classList.toggle("done",e.target.checked);progress();
+  }));
+  progress();
+}
+function progress(){
+  const all=document.querySelectorAll(".day[data-k] input"),n=all.length;
+  const c=[...all].filter(x=>x.checked).length;
+  const p=n?Math.round(c/n*100):0;
+  $("sPct").textContent=p+"%";$("bar").style.width=p+"%";
+}
+
+$("go").addEventListener("click",build);
+$("reset").addEventListener("click",()=>{const s=store.get();s.done={};store.set(s);if($("out").style.display!=="none")build()});
+
+// restore previous inputs
+(function(){
+  const s=store.get();
+  if(s.exam)$("exam").value=s.exam;
+  if(s.hpd)$("hpd").value=s.hpd;
+  (s.weak||[]).forEach(i=>{const c=document.querySelector(`#weak input[data-i="${i}"]`);if(c)c.checked=true});
+  if(s.exam)build();
+})();
+</script>
+</body>
+</html>

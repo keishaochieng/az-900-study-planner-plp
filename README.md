@@ -25,7 +25,7 @@ Many learners don't know how to split their study time before an exam date, so t
 4. Time is shared out in proportion to the weights and filled into the days in order.
 
 ## How to use it
-1. Open the live demo: **[add your GitHub Pages link here]**
+1. Open the live demo: https://keishaochieng.github.io/az-900-study-planner-plp/
 2. Pick your exam date and daily hours.
 3. Tick your weak areas.
 4. Click **Build my plan** and follow it day by day.

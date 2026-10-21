@@ -40,6 +40,22 @@ Plain HTML, CSS and JavaScript in a single file. No frameworks, no backend. Buil
 - Support other Microsoft fundamentals exams (AI-900, SC-900, etc.)
 - Add reminders and a Swahili interface
 
+  ## How I used AI
+
+I built this project with Claude (claude.ai) as my building and prompt-engineering assistant, working in short steps and giving it clear constraints.
+
+**1. Choosing the challenge.** I pasted the hackathon brief and asked which challenge I could finish within about two hours. Because my network was unstable, I then asked for "the easiest and fastest" option. This narrowed five challenges to one: the Study Planner, built as a single offline page.
+
+**2. Building and refining.** Claude produced the first version of the planner (exam date, daily hours and weak areas in, a day-by-day plan out). I then tested it myself and gave feedback:
+- I noticed the page could not return to a clean form because it remembered my last inputs, so I asked for a way to start fresh. Claude added the **Start over** button.
+- I checked the "Reset progress" button and confirmed what it does (it only unticks days).
+
+**3. Supporting material.** I also used Claude to help write this README and draft my pitch deck.
+
+**What I did myself:** chose the challenge and constraints, tested the tool on my phone and browser, set up the GitHub repo and GitHub Pages, and decided what to keep or change.
+
+**Note:** the topic list follows the public AZ-900 skills outline on Microsoft Learn. This tool contains no real exam questions and is unofficial.
+
 ## Author
 Keisha Akinyi Ochieng
 
